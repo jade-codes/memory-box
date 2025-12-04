@@ -15,7 +15,7 @@ def mock_settings() -> Settings:
     return Settings(
         neo4j_uri="bolt://test:7687",
         neo4j_user="test_user",
-        neo4j_password="test_password",  # noqa: S106
+        neo4j_password="test_password",
         neo4j_database="test_db",
     )
 

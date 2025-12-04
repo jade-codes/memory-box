@@ -2,25 +2,23 @@
 
 from fastmcp import FastMCP
 
-from memory_box.config import get_settings
+from memory_box.api import MemoryBox
 from memory_box.context import get_current_context
-from memory_box.database import Neo4jClient
 from memory_box.models import Command
 
 # Initialize FastMCP server
 mcp = FastMCP("Memory Box")
 
-# Global database client (will be initialized on startup)
-db_client: Neo4jClient | None = None
+# Global Memory Box client (will be initialized on startup)
+memory_box: MemoryBox | None = None
 
 
-def get_db() -> Neo4jClient:
-    """Get the database client."""
-    global db_client
-    if db_client is None:
-        settings = get_settings()
-        db_client = Neo4jClient(settings)
-    return db_client
+def get_memory_box() -> MemoryBox:
+    """Get the Memory Box API client."""
+    global memory_box
+    if memory_box is None:
+        memory_box = MemoryBox()
+    return memory_box
 
 
 @mcp.tool()
@@ -50,7 +48,7 @@ def add_command(
     Returns:
         Success message with the command ID
     """
-    db = get_db()
+    mb = get_memory_box()
 
     if tags is None:
         tags = []
@@ -73,7 +71,7 @@ def add_command(
         category=category,
     )
 
-    command_id = db.add_command(cmd)
+    command_id = mb.add_command(cmd)
 
     return f"✓ Command added successfully! ID: {command_id}"
 
@@ -103,7 +101,7 @@ def search_commands(
     Returns:
         Formatted list of matching commands
     """
-    db = get_db()
+    mb = get_memory_box()
 
     # Use current context if requested
     if use_current_context:
@@ -113,7 +111,7 @@ def search_commands(
         if project_type is None:
             project_type = current_context.get("project_type")
 
-    commands = db.search_commands(
+    commands = mb.search_commands(
         query=query, os=os, project_type=project_type, category=category, tags=tags, limit=limit
     )
 
@@ -159,8 +157,8 @@ def get_command_by_id(command_id: str) -> str:
     Returns:
         The command details
     """
-    db = get_db()
-    cmd = db.get_command(command_id)
+    mb = get_memory_box()
+    cmd = mb.get_command(command_id)
 
     if not cmd:
         return f"Command with ID {command_id} not found."
@@ -201,8 +199,8 @@ def delete_command(command_id: str) -> str:
     Returns:
         Success or error message
     """
-    db = get_db()
-    success = db.delete_command(command_id)
+    mb = get_memory_box()
+    success = mb.delete_command(command_id)
 
     if success:
         return f"✓ Command {command_id} deleted successfully."
@@ -217,8 +215,8 @@ def list_tags() -> str:
     Returns:
         Formatted list of all tags
     """
-    db = get_db()
-    tags = db.get_all_tags()
+    mb = get_memory_box()
+    tags = mb.get_all_tags()
 
     if not tags:
         return "No tags found."
@@ -234,8 +232,8 @@ def list_categories() -> str:
     Returns:
         Formatted list of all categories
     """
-    db = get_db()
-    categories = db.get_all_categories()
+    mb = get_memory_box()
+    categories = mb.get_all_categories()
 
     if not categories:
         return "No categories found."
@@ -253,8 +251,8 @@ def get_context_suggestions() -> str:
     """
     current_context = get_current_context()
 
-    db = get_db()
-    commands = db.search_commands(
+    mb = get_memory_box()
+    commands = mb.search_commands(
         os=current_context.get("os"), project_type=current_context.get("project_type"), limit=10
     )
 

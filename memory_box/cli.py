@@ -5,9 +5,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from memory_box.config import get_settings
+from memory_box.api import MemoryBox
 from memory_box.context import get_current_context
-from memory_box.database import Neo4jClient
 from memory_box.models import Command
 
 app = typer.Typer(
@@ -19,10 +18,9 @@ app = typer.Typer(
 console = Console()
 
 
-def get_db() -> Neo4jClient:
-    """Get database client."""
-    settings = get_settings()
-    return Neo4jClient(settings)
+def get_memory_box() -> MemoryBox:
+    """Get Memory Box API client."""
+    return MemoryBox()
 
 
 @app.command()
@@ -46,7 +44,7 @@ def add(
 ) -> None:
     """Add a new command to your memory box."""
 
-    db = get_db()
+    mb = get_memory_box()
 
     # Auto-detect context if enabled
     if auto_context:
@@ -66,12 +64,12 @@ def add(
         category=category,
     )
 
-    command_id = db.add_command(cmd)
+    command_id = mb.add_command(cmd)
 
     console.print("[green]✓[/green] Command added successfully!")
     console.print(f"[dim]ID: {command_id}[/dim]")
 
-    db.close()
+    mb.close()
 
 
 @app.command()
@@ -86,7 +84,7 @@ def search(
 ) -> None:
     """Search for commands in your memory box."""
 
-    db = get_db()
+    mb = get_memory_box()
 
     # Use current context if requested
     if current:
@@ -96,13 +94,13 @@ def search(
         if project_type is None:
             project_type = current_context.get("project_type")
 
-    commands = db.search_commands(
+    commands = mb.search_commands(
         query=query, os=os, project_type=project_type, category=category, tags=tags, limit=limit
     )
 
     if not commands:
         console.print("[yellow]No commands found.[/yellow]")
-        db.close()
+        mb.close()
         return
 
     table = Table(
@@ -129,19 +127,19 @@ def search(
         table.add_row(cmd.description, cmd.command, context_str, str(cmd.use_count))
 
     console.print(table)
-    db.close()
+    mb.close()
 
 
 @app.command()
 def get(command_id: str = typer.Argument(..., help="Command ID")) -> None:
     """Get a specific command by ID."""
 
-    db = get_db()
-    cmd = db.get_command(command_id)
+    mb = get_memory_box()
+    cmd = mb.get_command(command_id)
 
     if not cmd:
         console.print(f"[red]Command {command_id} not found.[/red]")
-        db.close()
+        mb.close()
         return
 
     # Create a detailed view
@@ -168,7 +166,7 @@ def get(command_id: str = typer.Argument(..., help="Command ID")) -> None:
     details += f"\n[dim]Used {cmd.use_count} time(s) • Created {cmd.created_at}[/dim]"
 
     console.print(Panel(details, title="Command Details", border_style="blue"))
-    db.close()
+    mb.close()
 
 
 @app.command()
@@ -181,27 +179,27 @@ def delete(command_id: str = typer.Argument(..., help="Command ID to delete")) -
         console.print("[yellow]Deletion cancelled.[/yellow]")
         return
 
-    db = get_db()
-    success = db.delete_command(command_id)
+    mb = get_memory_box()
+    success = mb.delete_command(command_id)
 
     if success:
         console.print(f"[green]✓[/green] Command {command_id} deleted.")
     else:
         console.print(f"[red]Command {command_id} not found.[/red]")
 
-    db.close()
+    mb.close()
 
 
 @app.command()
 def tags() -> None:
     """List all tags in your memory box."""
 
-    db = get_db()
-    tag_list = db.get_all_tags()
+    mb = get_memory_box()
+    tag_list = mb.get_all_tags()
 
     if not tag_list:
         console.print("[yellow]No tags found.[/yellow]")
-        db.close()
+        mb.close()
         return
 
     console.print(f"\n[bold]Tags ({len(tag_list)}):[/bold]")
@@ -209,19 +207,19 @@ def tags() -> None:
         console.print(f"  • {tag}")
     console.print()
 
-    db.close()
+    mb.close()
 
 
 @app.command()
 def categories() -> None:
     """List all categories in your memory box."""
 
-    db = get_db()
-    cat_list = db.get_all_categories()
+    mb = get_memory_box()
+    cat_list = mb.get_all_categories()
 
     if not cat_list:
         console.print("[yellow]No categories found.[/yellow]")
-        db.close()
+        mb.close()
         return
 
     console.print(f"\n[bold]Categories ({len(cat_list)}):[/bold]")
@@ -229,7 +227,7 @@ def categories() -> None:
         console.print(f"  • {cat}")
     console.print()
 
-    db.close()
+    mb.close()
 
 
 @app.command()
@@ -252,8 +250,8 @@ def suggest() -> None:
 
     current_context = get_current_context()
 
-    db = get_db()
-    commands = db.search_commands(
+    mb = get_memory_box()
+    commands = mb.search_commands(
         os=current_context.get("os"), project_type=current_context.get("project_type"), limit=10
     )
 
@@ -261,7 +259,7 @@ def suggest() -> None:
         console.print("[yellow]No commands found for current context:[/yellow]")
         console.print(f"  OS: {current_context.get('os')}")
         console.print(f"  Project: {current_context.get('project_type') or 'none detected'}")
-        db.close()
+        mb.close()
         return
 
     console.print(
@@ -280,7 +278,7 @@ def suggest() -> None:
             console.print(f"   [dim]Tags: {', '.join(cmd.tags)}[/dim]")
 
     console.print()
-    db.close()
+    mb.close()
 
 
 if __name__ == "__main__":
