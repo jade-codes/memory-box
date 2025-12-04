@@ -1,33 +1,12 @@
-# Cursor AI Rules for Memory Box
+# MANDATORY: Read CONTRIBUTING.md Before ANY Code Changes
 
-## MANDATORY: Read CONTRIBUTING.md First
+**All development guidelines are in `/workspace/CONTRIBUTING.md`**
 
-**BEFORE making ANY code changes, you MUST:**
+Before coding:
+1. Read CONTRIBUTING.md
+2. Follow TDD (tests first, then code, then refactor)
+3. Ask before implementing
+4. Separate database/business logic
+5. Run `make check-guidelines` after changes
 
-1. Read `/workspace/CONTRIBUTING.md` in full
-2. Follow ALL guidelines specified in that document
-3. These are BINDING requirements, not suggestions
-
-## Quick Summary (Full details in CONTRIBUTING.md)
-
-### Required Workflow
-1. **ASK FIRST** - Validate requirements before coding
-2. **TDD** - Write tests BEFORE implementation (Red → Green → Refactor)
-3. **Run checks** - `make check-guidelines` after every change
-4. **Provide checklist** - Use the mandatory checklist from CONTRIBUTING.md
-
-### Architecture Rules
-- **Separate database from business logic** - Never mix in same method
-- **Single Responsibility** - One function = one purpose
-- **Behavior testing** - Test what code does, not how
-
-### Automation
-- Run `make check-guidelines` after code changes
-- Fix ALL linting, formatting, type errors, test failures
-
-### Violations = Rejection
-If you violate CONTRIBUTING.md guidelines, code will be rejected.
-
----
-
-**READ CONTRIBUTING.md NOW before proceeding with any task.**
+**Violations = Rejection**
