@@ -3,7 +3,6 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
-  
   "customizations": {
     "vscode": {
       "extensions": [
@@ -24,10 +23,10 @@
       }
     }
   },
-  
-  "forwardPorts": [7474, 7687],
-  
+  "forwardPorts": [
+    7474,
+    7687
+  ],
   "postCreateCommand": "uv sync --all-extras",
-  
   "remoteUser": "vscode"
 }

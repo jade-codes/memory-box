@@ -1,10 +1,13 @@
 """Neo4j database client for Memory Box."""
 
+import contextlib
+import re
 import uuid
 from datetime import datetime
 
 from neo4j import Driver, GraphDatabase
 from neo4j.time import DateTime as Neo4jDateTime
+from rapidfuzz import fuzz
 
 from memory_box.config import Settings
 from memory_box.models import Command, CommandWithMetadata
@@ -15,6 +18,40 @@ def _convert_neo4j_datetime(value: datetime | Neo4jDateTime | None) -> datetime 
     if isinstance(value, Neo4jDateTime):
         return value.to_native()
     return value
+
+
+def _obfuscate_secrets(command: str) -> str:
+    """Obfuscate passwords and secrets in commands."""
+    # Pattern for common password/token flags and parameters
+    # Supports quoted values (single or double quotes) and unquoted values
+    patterns = [
+        # Flags like -p, --password followed by quoted values (with any content inside)
+        (r'''(-p|--password|--pass|--pwd)\s+"[^"]*"''', r"\1 ****"),
+        (r"""(-p|--password|--pass|--pwd)\s+'[^']*'""", r"\1 ****"),
+        # Flags followed by unquoted values
+        (r"(-p|--password|--pass|--pwd)\s+\S+", r"\1 ****"),
+        # Key=value with double quotes
+        (r'''(password=|pwd=|pass=)"[^"]*"''', r'\1****'),
+        (r'''(token=|api_key=|apikey=|secret=)"[^"]*"''', r'\1****'),
+        (r'''(NEO4J_PASSWORD=|DB_PASSWORD=|POSTGRES_PASSWORD=)"[^"]*"''', r'\1****'),
+        # Key=value with single quotes
+        (r"""(password=|pwd=|pass=)'[^']*'""", r'\1****'),
+        (r"""(token=|api_key=|apikey=|secret=)'[^']*'""", r'\1****'),
+        (r"""(NEO4J_PASSWORD=|DB_PASSWORD=|POSTGRES_PASSWORD=)'[^']*'""", r'\1****'),
+        # Key=value without quotes
+        (r"(password=|pwd=|pass=)\S+", r"\1****"),
+        (r"(token=|api_key=|apikey=|secret=)\S+", r"\1****"),
+        (r"(NEO4J_PASSWORD=|DB_PASSWORD=|POSTGRES_PASSWORD=)\S+", r"\1****"),
+        # Match passwords in URLs
+        (r"(://[^:]+:)([^@]+)(@)", r"\1****\3"),
+    ]
+
+    obfuscated = command
+    for pattern, replacement in patterns:
+        obfuscated = re.sub(pattern, replacement,
+                            obfuscated, flags=re.IGNORECASE)
+
+    return obfuscated.rstrip()
 
 
 class Neo4jClient:
@@ -46,10 +83,20 @@ class Neo4jClient:
                 "CREATE INDEX command_text_index IF NOT EXISTS "
                 "FOR (c:Command) ON (c.command, c.description)"
             )
+            # Full-text index for fuzzy search
+            with contextlib.suppress(Exception):
+                # Index might already exist or Neo4j version doesn't support it
+                session.run(
+                    "CREATE FULLTEXT INDEX command_fulltext IF NOT EXISTS "
+                    "FOR (c:Command) ON EACH [c.command, c.description, c.context]"
+                )
 
     def add_command(self, command: Command) -> str:
         """Add a new command to the database."""
         command_id = str(uuid.uuid4())
+
+        # Always strip secrets from command before storing
+        command_text = _obfuscate_secrets(command.command)
 
         with self.driver.session(database=self.database) as session:
             session.run(
@@ -72,7 +119,7 @@ class Neo4jClient:
                 MERGE (c)-[:TAGGED_WITH]->(t)
                 """,
                 id=command_id,
-                command=command.command,
+                command=command_text,
                 description=command.description,
                 os=command.os,
                 project_type=command.project_type,
@@ -91,9 +138,22 @@ class Neo4jClient:
         project_type: str | None = None,
         category: str | None = None,
         tags: list[str] | None = None,
-        limit: int = 10
+        limit: int = 10,
+        fuzzy: bool = False,
+        fuzzy_threshold: int = 60
     ) -> list[CommandWithMetadata]:
-        """Search for commands matching the criteria."""
+        """Search for commands matching the criteria.
+
+        Args:
+            query: Text to search for
+            os: Filter by operating system
+            project_type: Filter by project type
+            category: Filter by category
+            tags: Filter by tags (all must match)
+            limit: Maximum number of results
+            fuzzy: Enable fuzzy matching for query
+            fuzzy_threshold: Minimum similarity score (0-100) for fuzzy matches
+        """
 
         # Build the Cypher query dynamically
         where_clauses = []
@@ -155,6 +215,7 @@ class Neo4jClient:
                 node = record["c"]
                 tags = record["tags"]
 
+                # Command is already obfuscated in DB, just return it
                 commands.append(CommandWithMetadata(
                     id=node["id"],
                     command=node["command"],
@@ -168,6 +229,25 @@ class Neo4jClient:
                     last_used=_convert_neo4j_datetime(node.get("last_used")),
                     use_count=node.get("use_count", 0)
                 ))
+
+            # Apply fuzzy matching if enabled and query provided
+            if fuzzy and query and commands:
+                scored_commands = []
+                for cmd in commands:
+                    # Calculate fuzzy score against command and description
+                    cmd_score = fuzz.partial_ratio(
+                        query.lower(), cmd.command.lower())
+                    desc_score = fuzz.partial_ratio(
+                        query.lower(), cmd.description.lower())
+                    max_score = max(cmd_score, desc_score)
+
+                    if max_score >= fuzzy_threshold:
+                        scored_commands.append((max_score, cmd))
+
+                # Sort by score (highest first), then by use count
+                scored_commands.sort(key=lambda x: (
+                    x[0], x[1].use_count), reverse=True)
+                commands = [cmd for _, cmd in scored_commands[:limit]]
 
             return commands
 
@@ -196,6 +276,7 @@ class Neo4jClient:
             node = record["c"]
             tags = record["tags"]
 
+            # Command is already obfuscated in DB, just return it
             return CommandWithMetadata(
                 id=node["id"],
                 command=node["command"],

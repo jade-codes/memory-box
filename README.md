@@ -17,23 +17,31 @@ Memory Box is a Model Context Protocol (MCP) server that stores your frequently-
 
 ### 1. Install Neo4j
 
-You need a Neo4j database running. The easiest way:
+You need a Neo4j database running. The easiest way is using Docker Compose:
 
 ```bash
-# Using Docker
+# Clone the repository
+git clone https://github.com/jade-codes/memory-box.git
+cd memory-box
+
+# Start Neo4j with Docker Compose
+docker-compose -f .devcontainer/docker-compose.yml up -d neo4j
+
+# Or use standalone Docker
 docker run \
     --name neo4j \
     -p 7474:7474 -p 7687:7687 \
-    -e NEO4J_AUTH=neo4j/password \
-    -d neo4j:latest
+    -e NEO4J_AUTH=neo4j/devpassword \
+    -d neo4j:5-community
 ```
+
+The Neo4j browser will be available at http://localhost:7474
 
 Or download from [neo4j.com/download](https://neo4j.com/download/)
 
 ### 2. Install Memory Box
 
 ```bash
-cd /home/jade-codes/repositories/memory-box
 pip install -e .
 ```
 
@@ -41,7 +49,7 @@ pip install -e .
 
 ```bash
 cp .env.example .env
-# Edit .env with your Neo4j credentials
+# Edit .env with your Neo4j credentials (default: neo4j/devpassword)
 ```
 
 ### 4. Start Using!
@@ -81,7 +89,8 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
       "env": {
         "NEO4J_URI": "bolt://localhost:7687",
         "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "password"
+        "NEO4J_PASSWORD": "devpassword",
+        "NEO4J_DATABASE": "neo4j"
       }
     }
   }
@@ -201,19 +210,70 @@ memory-box/
 
 ## Development
 
+### Setup
+
 ```bash
+# Clone and enter the repository
+git clone https://github.com/jade-codes/memory-box.git
+cd memory-box
+
+# Start Neo4j database
+docker-compose -f .devcontainer/docker-compose.yml up -d neo4j
+
 # Install in development mode with dev dependencies
 pip install -e ".[dev]"
 
+# Copy environment configuration
+cp .env.example .env
+```
+
+### Testing
+
+```bash
+# Run all tests (unit + integration)
+pytest
+
+# Run only unit tests
+pytest tests/unit
+
+# Run only integration tests (requires Neo4j running)
+pytest tests/integration
+
+# Run with coverage
+pytest --cov=memory_box --cov-report=html
+```
+
+### Code Quality
+
+```bash
 # Format code
-black memory_box/
+ruff format memory_box/
 
 # Lint
 ruff check memory_box/
 
-# Run tests (coming soon)
-pytest
+# Type check
+mypy memory_box/
 ```
+
+### Docker Compose
+
+The project includes a `docker-compose.yml` for development:
+
+```yaml
+services:
+  neo4j:
+    image: neo4j:5-community
+    ports:
+      - "7474:7474"  # Browser UI
+      - "7687:7687"  # Bolt protocol
+    environment:
+      - NEO4J_AUTH=neo4j/devpassword
+    volumes:
+      - neo4j-data:/data
+```
+
+Access Neo4j Browser at http://localhost:7474 (user: neo4j, password: devpassword)
 
 ## Why Memory Box?
 
