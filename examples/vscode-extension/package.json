@@ -1,0 +1,82 @@
+{
+    "name": "memory-box-vscode",
+    "displayName": "Memory Box",
+    "description": "Automatically capture and search terminal commands",
+    "version": "0.1.0",
+    "publisher": "memory-box",
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "memoryBox.searchCommands",
+                "title": "Memory Box: Search Commands"
+            },
+            {
+                "command": "memoryBox.addCommand",
+                "title": "Memory Box: Add Command Manually"
+            },
+            {
+                "command": "memoryBox.toggleAutoCapture",
+                "title": "Memory Box: Toggle Auto-Capture"
+            }
+        ],
+        "configuration": {
+            "title": "Memory Box",
+            "properties": {
+                "memoryBox.autoCapture": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically capture terminal commands"
+                },
+                "memoryBox.pythonPath": {
+                    "type": "string",
+                    "default": "python",
+                    "description": "Path to Python executable (memory-box must be installed)"
+                },
+                "memoryBox.captureExitCodeZeroOnly": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Only capture commands that succeed (exit code 0)"
+                },
+                "memoryBox.neo4jUri": {
+                    "type": "string",
+                    "default": "bolt://localhost:7687",
+                    "description": "Neo4j URI"
+                },
+                "memoryBox.neo4jUser": {
+                    "type": "string",
+                    "default": "neo4j",
+                    "description": "Neo4j username"
+                },
+                "memoryBox.neo4jPassword": {
+                    "type": "string",
+                    "default": "devpassword",
+                    "description": "Neo4j password"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "lint": "eslint src --ext ts"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "@types/vscode": "^1.85.0",
+        "@typescript-eslint/eslint-plugin": "^6.0.0",
+        "@typescript-eslint/parser": "^6.0.0",
+        "eslint": "^8.0.0",
+        "typescript": "^5.0.0"
+    }
+}

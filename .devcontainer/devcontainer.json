@@ -3,13 +3,19 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance",
         "charliermarsh.ruff",
-        "neo4j.neo4j-vscode"
+        "neo4j.neo4j-vscode",
+        "dbaeumer.vscode-eslint"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",

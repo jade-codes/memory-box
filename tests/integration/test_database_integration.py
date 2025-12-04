@@ -13,7 +13,8 @@ from memory_box.database import Neo4jClient
 from memory_box.models import Command, CommandWithMetadata
 
 # Check if Neo4j is available for integration tests
-SKIP_INTEGRATION = os.getenv("SKIP_INTEGRATION_TESTS", "false").lower() == "true"
+SKIP_INTEGRATION = os.getenv(
+    "SKIP_INTEGRATION_TESTS", "false").lower() == "true"
 skip_if_no_neo4j = pytest.mark.skipif(
     SKIP_INTEGRATION,
     reason="Integration tests disabled (set SKIP_INTEGRATION_TESTS=false to enable)",
@@ -27,7 +28,7 @@ def neo4j_settings() -> Settings:
     return Settings(
         neo4j_uri=os.getenv("NEO4J_TEST_URI", "bolt://localhost:7687"),
         neo4j_user=os.getenv("NEO4J_TEST_USER", "neo4j"),
-        neo4j_password=os.getenv("NEO4J_TEST_PASSWORD", "devpassword"),
+        neo4j_password=os.getenv("NEO4J_PASSWORD", "devpassword"),
         neo4j_database=os.getenv("NEO4J_TEST_DATABASE", "neo4j"),
     )
 
@@ -151,7 +152,8 @@ class TestNeo4jIntegration:
         assert all(r.os == "linux" for r in linux_results)
 
         # Filter by project type
-        python_results = db_client.search_commands(project_type="python", limit=10)
+        python_results = db_client.search_commands(
+            project_type="python", limit=10)
         assert len(python_results) >= 1
         assert all(r.project_type == "python" for r in python_results)
 
@@ -160,13 +162,15 @@ class TestNeo4jIntegration:
         assert len(fs_results) == 2
 
         # Filter by tags
-        python_tag_results = db_client.search_commands(tags=["python"], limit=10)
+        python_tag_results = db_client.search_commands(
+            tags=["python"], limit=10)
         assert len(python_tag_results) >= 1
         assert all("python" in r.tags for r in python_tag_results)
 
     def test_delete_command(self, db_client: Neo4jClient) -> None:
         """Test deleting a command."""
-        cmd = Command(command="test command", description="A test command to delete", tags=["test"])
+        cmd = Command(command="test command",
+                      description="A test command to delete", tags=["test"])
 
         command_id = db_client.add_command(cmd)
         assert command_id is not None
@@ -190,9 +194,12 @@ class TestNeo4jIntegration:
     def test_get_all_tags(self, db_client: Neo4jClient) -> None:
         """Test retrieving all unique tags."""
         commands = [
-            Command(command="cmd1", description="Command 1", tags=["tag1", "tag2"]),
-            Command(command="cmd2", description="Command 2", tags=["tag2", "tag3"]),
-            Command(command="cmd3", description="Command 3", tags=["tag3", "tag4"]),
+            Command(command="cmd1", description="Command 1",
+                    tags=["tag1", "tag2"]),
+            Command(command="cmd2", description="Command 2",
+                    tags=["tag2", "tag3"]),
+            Command(command="cmd3", description="Command 3",
+                    tags=["tag3", "tag4"]),
         ]
 
         for cmd in commands:
@@ -219,7 +226,8 @@ class TestNeo4jIntegration:
 
     def test_use_count_increment(self, db_client: Neo4jClient) -> None:
         """Test that use count increments when retrieving commands."""
-        cmd = Command(command="test command", description="Test use count", tags=["test"])
+        cmd = Command(command="test command",
+                      description="Test use count", tags=["test"])
 
         command_id = db_client.add_command(cmd)
 
@@ -231,7 +239,8 @@ class TestNeo4jIntegration:
 
     def test_last_used_timestamp(self, db_client: Neo4jClient) -> None:
         """Test that last_used timestamp is updated."""
-        cmd = Command(command="test command", description="Test timestamp", tags=["test"])
+        cmd = Command(command="test command",
+                      description="Test timestamp", tags=["test"])
 
         command_id = db_client.add_command(cmd)
 
@@ -289,7 +298,8 @@ class TestNeo4jIntegration:
         """Test that created_at timestamp is set correctly."""
         before = datetime.now(tz=UTC)
 
-        cmd = Command(command="test timestamp", description="Test timestamp", tags=["test"])
+        cmd = Command(command="test timestamp",
+                      description="Test timestamp", tags=["test"])
 
         command_id = db_client.add_command(cmd)
         retrieved = db_client.get_command(command_id)

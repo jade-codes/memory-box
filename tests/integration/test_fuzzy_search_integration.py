@@ -23,7 +23,7 @@ def neo4j_settings() -> Settings:
     return Settings(
         neo4j_uri=os.getenv("NEO4J_TEST_URI", "bolt://localhost:7687"),
         neo4j_user=os.getenv("NEO4J_TEST_USER", "neo4j"),
-        neo4j_password=os.getenv("NEO4J_TEST_PASSWORD", "devpassword"),
+        neo4j_password=os.getenv("NEO4J_PASSWORD", "devpassword"),
         neo4j_database=os.getenv("NEO4J_TEST_DATABASE", "neo4j"),
     )
 

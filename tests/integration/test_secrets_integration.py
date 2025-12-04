@@ -10,7 +10,8 @@ from memory_box.database import Neo4jClient
 from memory_box.models import Command
 
 # Check if Neo4j is available for integration tests
-SKIP_INTEGRATION = os.getenv("SKIP_INTEGRATION_TESTS", "false").lower() == "true"
+SKIP_INTEGRATION = os.getenv(
+    "SKIP_INTEGRATION_TESTS", "false").lower() == "true"
 skip_if_no_neo4j = pytest.mark.skipif(
     SKIP_INTEGRATION,
     reason="Integration tests disabled (set SKIP_INTEGRATION_TESTS=false to enable)",
@@ -23,7 +24,7 @@ def neo4j_settings() -> Settings:
     return Settings(
         neo4j_uri=os.getenv("NEO4J_TEST_URI", "bolt://localhost:7687"),
         neo4j_user=os.getenv("NEO4J_TEST_USER", "neo4j"),
-        neo4j_password=os.getenv("NEO4J_TEST_PASSWORD", "devpassword"),
+        neo4j_password=os.getenv("NEO4J_PASSWORD", "devpassword"),
         neo4j_database=os.getenv("NEO4J_TEST_DATABASE", "neo4j"),
     )
 

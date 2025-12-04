@@ -32,6 +32,7 @@ dev = [
 [project.scripts]
 memory-box = "memory_box.cli:app"
 memory-box-server = "memory_box.server:main"
+memory-box-bridge = "memory_box.bridge:main"
 
 [tool.ruff]
 line-length = 100
