@@ -39,8 +39,7 @@ def handle_request(mb: MemoryBox, request: dict[str, Any]) -> dict[str, Any]:
             r.model_dump(mode="json") for r in mb.search_commands(**params)
         ],
         "get_command": lambda: (
-            result.model_dump(mode="json") if (
-                result := mb.get_command(**params)) else None
+            result.model_dump(mode="json") if (result := mb.get_command(**params)) else None
         ),
         "list_commands": lambda: [r.model_dump(mode="json") for r in mb.list_commands(**params)],
         "delete_command": lambda: mb.delete_command(**params),
@@ -75,8 +74,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--neo4j-uri", default=None, help="Neo4j URI")
     parser.add_argument("--neo4j-user", default=None, help="Neo4j username")
-    parser.add_argument("--neo4j-password", default=None,
-                        help="Neo4j password")
+    parser.add_argument("--neo4j-password", default=None, help="Neo4j password")
     args = parser.parse_args()
 
     mb = MemoryBox(
@@ -98,8 +96,7 @@ def main() -> None:
                 write_response(response)
 
             except json.JSONDecodeError as e:
-                error_response = {"result": None,
-                                  "error": f"Invalid JSON: {e}"}
+                error_response = {"result": None, "error": f"Invalid JSON: {e}"}
                 write_response(error_response)
 
     except KeyboardInterrupt:
