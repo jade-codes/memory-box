@@ -1,0 +1,311 @@
+"""Command-line interface for Memory Box."""
+
+
+import typer
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
+from memory_box.config import get_settings
+from memory_box.context import get_current_context
+from memory_box.database import Neo4jClient
+from memory_box.models import Command
+
+app = typer.Typer(
+    name="memory-box",
+    help="A personal knowledge base for commands and workflows.",
+    add_completion=False
+)
+
+console = Console()
+
+
+def get_db() -> Neo4jClient:
+    """Get database client."""
+    settings = get_settings()
+    return Neo4jClient(settings)
+
+
+@app.command()
+def add(
+    command: str = typer.Argument(..., help="The command to save"),
+    description: str = typer.Option(
+        ..., "--desc", "-d", help="Description of what the command does"
+    ),
+    tags: list[str] | None = typer.Option(
+        None, "--tag", "-t", help="Tags (can be used multiple times)"
+    ),
+    os: str | None = typer.Option(
+        None, "--os", help="Operating system (linux, macos, windows)"),
+    project_type: str | None = typer.Option(
+        None, "--project", "-p", help="Project type (python, node, etc.)"
+    ),
+    context: str | None = typer.Option(
+        None, "--context", "-c", help="Additional context"),
+    category: str | None = typer.Option(
+        None, "--category", help="Category (git, docker, etc.)"),
+    auto_context: bool = typer.Option(
+        True, "--auto-context/--no-auto-context", help="Auto-detect context"
+    ),
+) -> None:
+    """Add a new command to your memory box."""
+
+    db = get_db()
+
+    # Auto-detect context if enabled
+    if auto_context:
+        current_context = get_current_context()
+        if os is None:
+            os = current_context.get("os")
+        if project_type is None:
+            project_type = current_context.get("project_type")
+
+    cmd = Command(
+        command=command,
+        description=description,
+        tags=tags or [],
+        os=os,
+        project_type=project_type,
+        context=context,
+        category=category
+    )
+
+    command_id = db.add_command(cmd)
+
+    console.print("[green]✓[/green] Command added successfully!")
+    console.print(f"[dim]ID: {command_id}[/dim]")
+
+    db.close()
+
+
+@app.command()
+def search(
+    query: str | None = typer.Argument(None, help="Search query"),
+    os: str | None = typer.Option(None, "--os", help="Filter by OS"),
+    project_type: str | None = typer.Option(
+        None, "--project", "-p", help="Filter by project type"
+    ),
+    category: str | None = typer.Option(
+        None, "--category", "-c", help="Filter by category"),
+    tags: list[str] | None = typer.Option(
+        None, "--tag", "-t", help="Filter by tags"),
+    limit: int = typer.Option(10, "--limit", "-l", help="Maximum results"),
+    current: bool = typer.Option(
+        False, "--current", help="Use current context"),
+) -> None:
+    """Search for commands in your memory box."""
+
+    db = get_db()
+
+    # Use current context if requested
+    if current:
+        current_context = get_current_context()
+        if os is None:
+            os = current_context.get("os")
+        if project_type is None:
+            project_type = current_context.get("project_type")
+
+    commands = db.search_commands(
+        query=query,
+        os=os,
+        project_type=project_type,
+        category=category,
+        tags=tags,
+        limit=limit
+    )
+
+    if not commands:
+        console.print("[yellow]No commands found.[/yellow]")
+        db.close()
+        return
+
+    table = Table(
+        title=f"Found {len(commands)} command(s)",
+        show_header=True,
+        header_style="bold magenta"
+    )
+    table.add_column("Description", style="cyan", no_wrap=False)
+    table.add_column("Command", style="green", no_wrap=False)
+    table.add_column("Context", style="yellow")
+    table.add_column("Used", justify="right", style="dim")
+
+    for cmd in commands:
+        context_parts = []
+        if cmd.os:
+            context_parts.append(f"OS:{cmd.os}")
+        if cmd.project_type:
+            context_parts.append(f"Proj:{cmd.project_type}")
+        if cmd.category:
+            context_parts.append(f"Cat:{cmd.category}")
+        if cmd.tags:
+            context_parts.append(f"Tags:{','.join(cmd.tags[:2])}")
+
+        context_str = "\n".join(context_parts) if context_parts else "-"
+
+        table.add_row(
+            cmd.description,
+            cmd.command,
+            context_str,
+            str(cmd.use_count)
+        )
+
+    console.print(table)
+    db.close()
+
+
+@app.command()
+def get(command_id: str = typer.Argument(..., help="Command ID")) -> None:
+    """Get a specific command by ID."""
+
+    db = get_db()
+    cmd = db.get_command(command_id)
+
+    if not cmd:
+        console.print(f"[red]Command {command_id} not found.[/red]")
+        db.close()
+        return
+
+    # Create a detailed view
+    details = f"""[bold cyan]Command:[/bold cyan]
+{cmd.command}
+
+[bold cyan]Description:[/bold cyan]
+{cmd.description}
+
+[bold cyan]ID:[/bold cyan] {cmd.id}
+"""
+
+    if cmd.os:
+        details += f"[bold cyan]OS:[/bold cyan] {cmd.os}\n"
+    if cmd.project_type:
+        details += f"[bold cyan]Project:[/bold cyan] {cmd.project_type}\n"
+    if cmd.category:
+        details += f"[bold cyan]Category:[/bold cyan] {cmd.category}\n"
+    if cmd.tags:
+        details += f"[bold cyan]Tags:[/bold cyan] {', '.join(cmd.tags)}\n"
+    if cmd.context:
+        details += f"[bold cyan]Context:[/bold cyan] {cmd.context}\n"
+
+    details += f"\n[dim]Used {cmd.use_count} time(s) • Created {cmd.created_at}[/dim]"
+
+    console.print(Panel(details, title="Command Details", border_style="blue"))
+    db.close()
+
+
+@app.command()
+def delete(command_id: str = typer.Argument(..., help="Command ID to delete")) -> None:
+    """Delete a command from your memory box."""
+
+    # Confirm deletion
+    confirm = typer.confirm(
+        f"Are you sure you want to delete command {command_id}?")
+    if not confirm:
+        console.print("[yellow]Deletion cancelled.[/yellow]")
+        return
+
+    db = get_db()
+    success = db.delete_command(command_id)
+
+    if success:
+        console.print(f"[green]✓[/green] Command {command_id} deleted.")
+    else:
+        console.print(f"[red]Command {command_id} not found.[/red]")
+
+    db.close()
+
+
+@app.command()
+def tags() -> None:
+    """List all tags in your memory box."""
+
+    db = get_db()
+    tag_list = db.get_all_tags()
+
+    if not tag_list:
+        console.print("[yellow]No tags found.[/yellow]")
+        db.close()
+        return
+
+    console.print(f"\n[bold]Tags ({len(tag_list)}):[/bold]")
+    for tag in tag_list:
+        console.print(f"  • {tag}")
+    console.print()
+
+    db.close()
+
+
+@app.command()
+def categories() -> None:
+    """List all categories in your memory box."""
+
+    db = get_db()
+    cat_list = db.get_all_categories()
+
+    if not cat_list:
+        console.print("[yellow]No categories found.[/yellow]")
+        db.close()
+        return
+
+    console.print(f"\n[bold]Categories ({len(cat_list)}):[/bold]")
+    for cat in cat_list:
+        console.print(f"  • {cat}")
+    console.print()
+
+    db.close()
+
+
+@app.command()
+def context() -> None:
+    """Show current system and project context."""
+
+    current = get_current_context()
+
+    info = f"""[bold cyan]Operating System:[/bold cyan] {current.get('os', 'unknown')}
+[bold cyan]Project Type:[/bold cyan] {current.get('project_type', 'none detected')}
+[bold cyan]Current Directory:[/bold cyan] {current.get('cwd', 'unknown')}
+"""
+
+    console.print(Panel(info, title="Current Context", border_style="green"))
+
+
+@app.command()
+def suggest() -> None:
+    """Get command suggestions based on current context."""
+
+    current_context = get_current_context()
+
+    db = get_db()
+    commands = db.search_commands(
+        os=current_context.get("os"),
+        project_type=current_context.get("project_type"),
+        limit=10
+    )
+
+    if not commands:
+        console.print(
+            "[yellow]No commands found for current context:[/yellow]")
+        console.print(f"  OS: {current_context.get('os')}")
+        console.print(
+            f"  Project: {current_context.get('project_type') or 'none detected'}")
+        db.close()
+        return
+
+    console.print(Panel(
+        f"[cyan]OS:[/cyan] {current_context.get('os')}\n"
+        f"[cyan]Project:[/cyan] {current_context.get('project_type') or 'none detected'}",
+        title="Context-Aware Suggestions",
+        border_style="green"
+    ))
+
+    for i, cmd in enumerate(commands, 1):
+        console.print(f"\n[bold]{i}. {cmd.description}[/bold]")
+        console.print(f"   [green]{cmd.command}[/green]")
+        if cmd.tags:
+            console.print(f"   [dim]Tags: {', '.join(cmd.tags)}[/dim]")
+
+    console.print()
+    db.close()
+
+
+if __name__ == "__main__":
+    app()
