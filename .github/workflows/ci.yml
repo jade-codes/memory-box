@@ -7,7 +7,32 @@ on:
     branches: [main]
 
 jobs:
-  quality:
+  python-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run ruff linting
+        run: uv run ruff check .
+
+      - name: Run ruff formatting check
+        run: uv run ruff format --check .
+
+      - name: Run mypy type checking
+        run: uv run mypy lib server
+
+  python-test:
     runs-on: ubuntu-latest
     
     services:
@@ -37,15 +62,6 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
 
-      - name: Run ruff linting
-        run: uv run ruff check .
-
-      - name: Run ruff formatting check
-        run: uv run ruff format --check .
-
-      - name: Run mypy type checking
-        run: uv run mypy memory_box
-
       - name: Run tests with coverage
         env:
           NEO4J_URI: bolt://localhost:7687
@@ -59,3 +75,80 @@ jobs:
         with:
           files: ./coverage.xml
           fail_ci_if_error: false
+
+  typescript-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: client/vscode/package-lock.json
+
+      - name: Install dependencies
+        working-directory: client/vscode
+        run: npm ci
+
+      - name: Lint TypeScript
+        working-directory: client/vscode
+        run: npm run lint
+
+      - name: Format check TypeScript
+        working-directory: client/vscode
+        run: npm run format-check
+
+      - name: Compile TypeScript
+        working-directory: client/vscode
+        run: npm run compile
+
+  typescript-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      neo4j:
+        image: neo4j:5-community
+        env:
+          NEO4J_AUTH: neo4j/testpassword
+        ports:
+          - 7687:7687
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p testpassword 'RETURN 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install Python dependencies
+        run: uv sync --all-extras
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: client/vscode/package-lock.json
+
+      - name: Install TypeScript dependencies
+        working-directory: client/vscode
+        run: npm ci
+
+      - name: Run TypeScript tests
+        working-directory: client/vscode
+        env:
+          NEO4J_URI: bolt://localhost:7687
+          NEO4J_USER: neo4j
+          NEO4J_PASSWORD: testpassword
+        run: npm test
