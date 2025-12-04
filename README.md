@@ -15,19 +15,46 @@ Memory Box is a Model Context Protocol (MCP) server that stores your frequently-
 
 ## Quick Start
 
-### 1. Install Neo4j
+### Option 1: Using Dev Container (Recommended)
 
-You need a Neo4j database running. The easiest way is using Docker Compose:
+The easiest way to get started is using the dev container, which automatically sets up Neo4j and all dependencies:
+
+1. **Prerequisites:**
+   - Docker (Docker Engine on Linux, or Docker Desktop on macOS/Windows)
+   - [VS Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+2. **Open in Dev Container:**
+   ```bash
+   git clone https://github.com/jade-codes/memory-box.git
+   cd memory-box
+   code .
+   ```
+   
+   When prompted, click "Reopen in Container" (or use Command Palette: `Dev Containers: Reopen in Container`)
+
+3. **Start using Memory Box:**
+   The dev container automatically:
+   - Starts Neo4j on port 7687 (credentials: `neo4j/devpassword`)
+   - Installs all Python dependencies
+   - Sets up the development environment
+   
+   ```bash
+   # Add a command
+   memory-box add "git log --oneline --graph --all" --desc "Visual git history" --tag git
+   
+   # Search commands
+   memory-box search git
+   ```
+
+### Option 2: Manual Setup
+
+If you prefer not to use the dev container:
+
+#### 1. Install Neo4j
+
+You need a Neo4j database running. Using Docker:
 
 ```bash
-# Clone the repository
-git clone https://github.com/jade-codes/memory-box.git
-cd memory-box
-
-# Start Neo4j with Docker Compose
-docker-compose -f .devcontainer/docker-compose.yml up -d neo4j
-
-# Or use standalone Docker
 docker run \
     --name neo4j \
     -p 7474:7474 -p 7687:7687 \
@@ -39,39 +66,40 @@ The Neo4j browser will be available at http://localhost:7474
 
 Or download from [neo4j.com/download](https://neo4j.com/download/)
 
-### 2. Install Memory Box
+#### 2. Install Memory Box
 
 ```bash
+# Clone the repository
+git clone https://github.com/jade-codes/memory-box.git
+cd memory-box
+
+# Install with uv (recommended)
+uv sync
+
+# Or with pip
 pip install -e .
 ```
 
-### 3. Configure Environment
+#### 3. Configure Environment
 
 ```bash
 cp .env.example .env
 # Edit .env with your Neo4j credentials (default: neo4j/devpassword)
 ```
 
-### 4. Start Using!
+#### 4. Start Using!
 
 **Via CLI:**
 ```bash
 # Add a command
-memory-box add "git log --oneline --graph --all" --desc "Visual git history" --tag git --tag log
+memory-box add "git log --oneline --graph --all" --desc "Visual git history" --tag git
 
 # Search commands
 memory-box search git
 
 # Get context-aware suggestions
 memory-box suggest
-
-# Search in current project context
-memory-box search --current
 ```
-
-**Via MCP (with Claude Desktop):**
-
-See [MCP Setup](#mcp-setup) below.
 
 ## MCP Setup
 
