@@ -29,7 +29,6 @@ def clean_database(neo4j_client):
     """Clean the database before each test."""
     with neo4j_client.driver.session(database=neo4j_client.database) as session:
         session.run("MATCH (n) DETACH DELETE n")
-    yield
 
 
 class TestMCPServerIntegration:
@@ -332,9 +331,7 @@ class TestMCPServerIntegration:
         )
 
         # Search with both query and filters
-        result = search_commands.fn(
-            query="commit", tags=["git"], category="version-control"
-        )
+        result = search_commands.fn(query="commit", tags=["git"], category="version-control")
         assert "git commit" in result
         assert "git push" not in result
         assert "svn commit" not in result

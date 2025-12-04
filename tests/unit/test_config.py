@@ -25,12 +25,15 @@ class TestSettings:
 
     def test_custom_settings(self) -> None:
         """Test custom settings via environment variables."""
-        with patch.dict(os.environ, {
-            "NEO4J_URI": "bolt://custom:7687",
-            "NEO4J_USER": "custom_user",
-            "NEO4J_PASSWORD": "custom_pass",
-            "NEO4J_DATABASE": "custom_db"
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "NEO4J_URI": "bolt://custom:7687",
+                "NEO4J_USER": "custom_user",
+                "NEO4J_PASSWORD": "custom_pass",
+                "NEO4J_DATABASE": "custom_db",
+            },
+        ):
             settings = Settings()
             assert settings.neo4j_uri == "bolt://custom:7687"
             assert settings.neo4j_user == "custom_user"

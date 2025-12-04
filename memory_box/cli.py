@@ -1,6 +1,5 @@
 """Command-line interface for Memory Box."""
 
-
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -14,7 +13,7 @@ from memory_box.models import Command
 app = typer.Typer(
     name="memory-box",
     help="A personal knowledge base for commands and workflows.",
-    add_completion=False
+    add_completion=False,
 )
 
 console = Console()
@@ -35,15 +34,12 @@ def add(
     tags: list[str] | None = typer.Option(
         None, "--tag", "-t", help="Tags (can be used multiple times)"
     ),
-    os: str | None = typer.Option(
-        None, "--os", help="Operating system (linux, macos, windows)"),
+    os: str | None = typer.Option(None, "--os", help="Operating system (linux, macos, windows)"),
     project_type: str | None = typer.Option(
         None, "--project", "-p", help="Project type (python, node, etc.)"
     ),
-    context: str | None = typer.Option(
-        None, "--context", "-c", help="Additional context"),
-    category: str | None = typer.Option(
-        None, "--category", help="Category (git, docker, etc.)"),
+    context: str | None = typer.Option(None, "--context", "-c", help="Additional context"),
+    category: str | None = typer.Option(None, "--category", help="Category (git, docker, etc.)"),
     auto_context: bool = typer.Option(
         True, "--auto-context/--no-auto-context", help="Auto-detect context"
     ),
@@ -67,7 +63,7 @@ def add(
         os=os,
         project_type=project_type,
         context=context,
-        category=category
+        category=category,
     )
 
     command_id = db.add_command(cmd)
@@ -82,16 +78,11 @@ def add(
 def search(
     query: str | None = typer.Argument(None, help="Search query"),
     os: str | None = typer.Option(None, "--os", help="Filter by OS"),
-    project_type: str | None = typer.Option(
-        None, "--project", "-p", help="Filter by project type"
-    ),
-    category: str | None = typer.Option(
-        None, "--category", "-c", help="Filter by category"),
-    tags: list[str] | None = typer.Option(
-        None, "--tag", "-t", help="Filter by tags"),
+    project_type: str | None = typer.Option(None, "--project", "-p", help="Filter by project type"),
+    category: str | None = typer.Option(None, "--category", "-c", help="Filter by category"),
+    tags: list[str] | None = typer.Option(None, "--tag", "-t", help="Filter by tags"),
     limit: int = typer.Option(10, "--limit", "-l", help="Maximum results"),
-    current: bool = typer.Option(
-        False, "--current", help="Use current context"),
+    current: bool = typer.Option(False, "--current", help="Use current context"),
 ) -> None:
     """Search for commands in your memory box."""
 
@@ -106,12 +97,7 @@ def search(
             project_type = current_context.get("project_type")
 
     commands = db.search_commands(
-        query=query,
-        os=os,
-        project_type=project_type,
-        category=category,
-        tags=tags,
-        limit=limit
+        query=query, os=os, project_type=project_type, category=category, tags=tags, limit=limit
     )
 
     if not commands:
@@ -120,9 +106,7 @@ def search(
         return
 
     table = Table(
-        title=f"Found {len(commands)} command(s)",
-        show_header=True,
-        header_style="bold magenta"
+        title=f"Found {len(commands)} command(s)", show_header=True, header_style="bold magenta"
     )
     table.add_column("Description", style="cyan", no_wrap=False)
     table.add_column("Command", style="green", no_wrap=False)
@@ -142,12 +126,7 @@ def search(
 
         context_str = "\n".join(context_parts) if context_parts else "-"
 
-        table.add_row(
-            cmd.description,
-            cmd.command,
-            context_str,
-            str(cmd.use_count)
-        )
+        table.add_row(cmd.description, cmd.command, context_str, str(cmd.use_count))
 
     console.print(table)
     db.close()
@@ -197,8 +176,7 @@ def delete(command_id: str = typer.Argument(..., help="Command ID to delete")) -
     """Delete a command from your memory box."""
 
     # Confirm deletion
-    confirm = typer.confirm(
-        f"Are you sure you want to delete command {command_id}?")
+    confirm = typer.confirm(f"Are you sure you want to delete command {command_id}?")
     if not confirm:
         console.print("[yellow]Deletion cancelled.[/yellow]")
         return
@@ -260,9 +238,9 @@ def context() -> None:
 
     current = get_current_context()
 
-    info = f"""[bold cyan]Operating System:[/bold cyan] {current.get('os', 'unknown')}
-[bold cyan]Project Type:[/bold cyan] {current.get('project_type', 'none detected')}
-[bold cyan]Current Directory:[/bold cyan] {current.get('cwd', 'unknown')}
+    info = f"""[bold cyan]Operating System:[/bold cyan] {current.get("os", "unknown")}
+[bold cyan]Project Type:[/bold cyan] {current.get("project_type", "none detected")}
+[bold cyan]Current Directory:[/bold cyan] {current.get("cwd", "unknown")}
 """
 
     console.print(Panel(info, title="Current Context", border_style="green"))
@@ -276,26 +254,24 @@ def suggest() -> None:
 
     db = get_db()
     commands = db.search_commands(
-        os=current_context.get("os"),
-        project_type=current_context.get("project_type"),
-        limit=10
+        os=current_context.get("os"), project_type=current_context.get("project_type"), limit=10
     )
 
     if not commands:
-        console.print(
-            "[yellow]No commands found for current context:[/yellow]")
+        console.print("[yellow]No commands found for current context:[/yellow]")
         console.print(f"  OS: {current_context.get('os')}")
-        console.print(
-            f"  Project: {current_context.get('project_type') or 'none detected'}")
+        console.print(f"  Project: {current_context.get('project_type') or 'none detected'}")
         db.close()
         return
 
-    console.print(Panel(
-        f"[cyan]OS:[/cyan] {current_context.get('os')}\n"
-        f"[cyan]Project:[/cyan] {current_context.get('project_type') or 'none detected'}",
-        title="Context-Aware Suggestions",
-        border_style="green"
-    ))
+    console.print(
+        Panel(
+            f"[cyan]OS:[/cyan] {current_context.get('os')}\n"
+            f"[cyan]Project:[/cyan] {current_context.get('project_type') or 'none detected'}",
+            title="Context-Aware Suggestions",
+            border_style="green",
+        )
+    )
 
     for i, cmd in enumerate(commands, 1):
         console.print(f"\n[bold]{i}. {cmd.description}[/bold]")

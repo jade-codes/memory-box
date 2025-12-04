@@ -10,11 +10,10 @@ from memory_box.database import Neo4jClient
 from memory_box.models import Command
 
 # Check if Neo4j is available for integration tests
-SKIP_INTEGRATION = os.getenv(
-    "SKIP_INTEGRATION_TESTS", "false").lower() == "true"
+SKIP_INTEGRATION = os.getenv("SKIP_INTEGRATION_TESTS", "false").lower() == "true"
 skip_if_no_neo4j = pytest.mark.skipif(
     SKIP_INTEGRATION,
-    reason="Integration tests disabled (set SKIP_INTEGRATION_TESTS=false to enable)"
+    reason="Integration tests disabled (set SKIP_INTEGRATION_TESTS=false to enable)",
 )
 
 
@@ -25,7 +24,7 @@ def neo4j_settings() -> Settings:
         neo4j_uri=os.getenv("NEO4J_TEST_URI", "bolt://localhost:7687"),
         neo4j_user=os.getenv("NEO4J_TEST_USER", "neo4j"),
         neo4j_password=os.getenv("NEO4J_TEST_PASSWORD", "devpassword"),
-        neo4j_database=os.getenv("NEO4J_TEST_DATABASE", "neo4j")
+        neo4j_database=os.getenv("NEO4J_TEST_DATABASE", "neo4j"),
     )
 
 
@@ -52,7 +51,7 @@ class TestSecretsIntegration:
         command = Command(
             command="mysql -u root -p MySecretPassword",
             description="Connect to MySQL",
-            tags=["database", "mysql"]
+            tags=["database", "mysql"],
         )
 
         command_id = db_client.add_command(command)
@@ -66,7 +65,7 @@ class TestSecretsIntegration:
         command = Command(
             command="git clone https://user:secret123@github.com/repo.git",
             description="Clone private repo",
-            tags=["git"]
+            tags=["git"],
         )
 
         command_id = db_client.add_command(command)
@@ -80,7 +79,7 @@ class TestSecretsIntegration:
         command = Command(
             command="export DB_PASSWORD=supersecret",
             description="Set database password",
-            tags=["env"]
+            tags=["env"],
         )
 
         command_id = db_client.add_command(command)
@@ -94,7 +93,7 @@ class TestSecretsIntegration:
         command = Command(
             command="psql --password MyPassword -d testdb",
             description="Connect to PostgreSQL database",
-            tags=["database", "postgresql"]
+            tags=["database", "postgresql"],
         )
 
         command_id = db_client.add_command(command)
@@ -109,7 +108,7 @@ class TestSecretsIntegration:
         command = Command(
             command="deploy -p secret1 token=secret2 api_key=secret3",
             description="Deploy with credentials",
-            tags=["deploy"]
+            tags=["deploy"],
         )
 
         command_id = db_client.add_command(command)
@@ -123,9 +122,7 @@ class TestSecretsIntegration:
     def test_no_secrets_unchanged(self, db_client: Neo4jClient) -> None:
         """Test that commands without secrets are stored unchanged."""
         command = Command(
-            command="ls -la /home/user",
-            description="List files",
-            tags=["filesystem"]
+            command="ls -la /home/user", description="List files", tags=["filesystem"]
         )
 
         command_id = db_client.add_command(command)

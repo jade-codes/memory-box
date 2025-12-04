@@ -16,7 +16,7 @@ def mock_settings() -> Settings:
         neo4j_uri="bolt://test:7687",
         neo4j_user="test_user",
         neo4j_password="test_password",  # noqa: S106
-        neo4j_database="test_db"
+        neo4j_database="test_db",
     )
 
 
@@ -44,7 +44,7 @@ class TestNeo4jClient:
         mock_graph_database: Mock,
         mock_settings: Settings,
         mock_driver: Mock,
-        mock_session: Mock
+        mock_session: Mock,
     ) -> None:
         """Test Neo4j client initialization."""
         mock_graph_database.driver.return_value = mock_driver
@@ -53,8 +53,7 @@ class TestNeo4jClient:
         client = Neo4jClient(mock_settings)
 
         mock_graph_database.driver.assert_called_once_with(
-            "bolt://test:7687",
-            auth=("test_user", "test_password")
+            "bolt://test:7687", auth=("test_user", "test_password")
         )
         assert client.database == "test_db"
 
@@ -64,7 +63,7 @@ class TestNeo4jClient:
         mock_graph_database: Mock,
         mock_settings: Settings,
         mock_driver: Mock,
-        mock_session: Mock
+        mock_session: Mock,
     ) -> None:
         """Test closing Neo4j client connection."""
         mock_graph_database.driver.return_value = mock_driver
@@ -83,7 +82,7 @@ class TestNeo4jClient:
         mock_graph_database: Mock,
         mock_settings: Settings,
         mock_driver: Mock,
-        mock_session: Mock
+        mock_session: Mock,
     ) -> None:
         """Test adding a command to the database."""
         mock_uuid.return_value = "test-uuid-123"
@@ -97,7 +96,7 @@ class TestNeo4jClient:
             description="Show working tree status",
             tags=["git"],
             os="linux",
-            project_type="python"
+            project_type="python",
         )
 
         command_id = client.add_command(cmd)
@@ -111,7 +110,7 @@ class TestNeo4jClient:
         mock_graph_database: Mock,
         mock_settings: Settings,
         mock_driver: Mock,
-        mock_session: Mock
+        mock_session: Mock,
     ) -> None:
         """Test searching commands with a query string."""
         mock_graph_database.driver.return_value = mock_driver
@@ -119,21 +118,23 @@ class TestNeo4jClient:
 
         # Mock the query result
         mock_record = Mock()
-        mock_record.__getitem__ = Mock(side_effect=lambda key: {
-            "c": {
-                "id": "test-id",
-                "command": "git status",
-                "description": "Show status",
-                "os": "linux",
-                "project_type": "python",
-                "context": None,
-                "category": "git",
-                "created_at": "2023-01-01T00:00:00",
-                "last_used": None,
-                "use_count": 0
-            },
-            "tags": ["git"]
-        }[key])
+        mock_record.__getitem__ = Mock(
+            side_effect=lambda key: {
+                "c": {
+                    "id": "test-id",
+                    "command": "git status",
+                    "description": "Show status",
+                    "os": "linux",
+                    "project_type": "python",
+                    "context": None,
+                    "category": "git",
+                    "created_at": "2023-01-01T00:00:00",
+                    "last_used": None,
+                    "use_count": 0,
+                },
+                "tags": ["git"],
+            }[key]
+        )
 
         mock_session.run.return_value = [mock_record]
 
@@ -150,7 +151,7 @@ class TestNeo4jClient:
         mock_graph_database: Mock,
         mock_settings: Settings,
         mock_driver: Mock,
-        mock_session: Mock
+        mock_session: Mock,
     ) -> None:
         """Test searching commands with no results."""
         mock_graph_database.driver.return_value = mock_driver
@@ -168,28 +169,30 @@ class TestNeo4jClient:
         mock_graph_database: Mock,
         mock_settings: Settings,
         mock_driver: Mock,
-        mock_session: Mock
+        mock_session: Mock,
     ) -> None:
         """Test getting a command by ID when it exists."""
         mock_graph_database.driver.return_value = mock_driver
         mock_driver.session.return_value = mock_session
 
         mock_record = Mock()
-        mock_record.__getitem__ = Mock(side_effect=lambda key: {
-            "c": {
-                "id": "test-id",
-                "command": "docker ps",
-                "description": "List containers",
-                "os": "linux",
-                "project_type": None,
-                "context": None,
-                "category": "docker",
-                "created_at": "2023-01-01T00:00:00",
-                "last_used": None,
-                "use_count": 1
-            },
-            "tags": ["docker"]
-        }[key])
+        mock_record.__getitem__ = Mock(
+            side_effect=lambda key: {
+                "c": {
+                    "id": "test-id",
+                    "command": "docker ps",
+                    "description": "List containers",
+                    "os": "linux",
+                    "project_type": None,
+                    "context": None,
+                    "category": "docker",
+                    "created_at": "2023-01-01T00:00:00",
+                    "last_used": None,
+                    "use_count": 1,
+                },
+                "tags": ["docker"],
+            }[key]
+        )
 
         mock_session.run.return_value.single.return_value = mock_record
 
@@ -207,7 +210,7 @@ class TestNeo4jClient:
         mock_graph_database: Mock,
         mock_settings: Settings,
         mock_driver: Mock,
-        mock_session: Mock
+        mock_session: Mock,
     ) -> None:
         """Test getting a command by ID when it doesn't exist."""
         mock_graph_database.driver.return_value = mock_driver
@@ -225,7 +228,7 @@ class TestNeo4jClient:
         mock_graph_database: Mock,
         mock_settings: Settings,
         mock_driver: Mock,
-        mock_session: Mock
+        mock_session: Mock,
     ) -> None:
         """Test deleting a command successfully."""
         mock_graph_database.driver.return_value = mock_driver
@@ -246,7 +249,7 @@ class TestNeo4jClient:
         mock_graph_database: Mock,
         mock_settings: Settings,
         mock_driver: Mock,
-        mock_session: Mock
+        mock_session: Mock,
     ) -> None:
         """Test deleting a command that doesn't exist."""
         mock_graph_database.driver.return_value = mock_driver
@@ -267,17 +270,13 @@ class TestNeo4jClient:
         mock_graph_database: Mock,
         mock_settings: Settings,
         mock_driver: Mock,
-        mock_session: Mock
+        mock_session: Mock,
     ) -> None:
         """Test getting all tags."""
         mock_graph_database.driver.return_value = mock_driver
         mock_driver.session.return_value = mock_session
 
-        mock_records = [
-            {"tag": "git"},
-            {"tag": "docker"},
-            {"tag": "python"}
-        ]
+        mock_records = [{"tag": "git"}, {"tag": "docker"}, {"tag": "python"}]
         mock_session.run.return_value = mock_records
 
         client = Neo4jClient(mock_settings)
@@ -291,17 +290,13 @@ class TestNeo4jClient:
         mock_graph_database: Mock,
         mock_settings: Settings,
         mock_driver: Mock,
-        mock_session: Mock
+        mock_session: Mock,
     ) -> None:
         """Test getting all categories."""
         mock_graph_database.driver.return_value = mock_driver
         mock_driver.session.return_value = mock_session
 
-        mock_records = [
-            {"category": "git"},
-            {"category": "docker"},
-            {"category": "kubernetes"}
-        ]
+        mock_records = [{"category": "git"}, {"category": "docker"}, {"category": "kubernetes"}]
         mock_session.run.return_value = mock_records
 
         client = Neo4jClient(mock_settings)

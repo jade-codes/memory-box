@@ -132,10 +132,7 @@ class TestGetCurrentContext:
     @patch("memory_box.context.detect_os")
     @patch("memory_box.context.Path.cwd")
     def test_get_current_context(
-        self,
-        mock_cwd: Mock,
-        mock_detect_os: Mock,
-        mock_detect_project_type: Mock
+        self, mock_cwd: Mock, mock_detect_os: Mock, mock_detect_project_type: Mock
     ) -> None:
         """Test getting current context."""
         mock_cwd.return_value = Path("/home/user/project")
@@ -144,11 +141,7 @@ class TestGetCurrentContext:
 
         context = get_current_context()
 
-        assert context == {
-            "os": "linux",
-            "project_type": "python",
-            "cwd": "/home/user/project"
-        }
+        assert context == {"os": "linux", "project_type": "python", "cwd": "/home/user/project"}
 
 
 class TestFormatContextInfo:
@@ -156,11 +149,7 @@ class TestFormatContextInfo:
 
     def test_format_complete_context(self) -> None:
         """Test formatting complete context information."""
-        context = {
-            "os": "linux",
-            "project_type": "python",
-            "cwd": "/home/user/project"
-        }
+        context = {"os": "linux", "project_type": "python", "cwd": "/home/user/project"}
         result = format_context_info(context)
         assert "OS: linux" in result
         assert "Project: python" in result
@@ -168,10 +157,7 @@ class TestFormatContextInfo:
 
     def test_format_partial_context(self) -> None:
         """Test formatting partial context information."""
-        context = {
-            "os": "macos",
-            "cwd": "/Users/user/project"
-        }
+        context = {"os": "macos", "cwd": "/Users/user/project"}
         result = format_context_info(context)
         assert "OS: macos" in result
         assert "Directory: /Users/user/project" in result
@@ -185,10 +171,6 @@ class TestFormatContextInfo:
 
     def test_format_none_values(self) -> None:
         """Test formatting context with None values."""
-        context = {
-            "os": None,
-            "project_type": None,
-            "cwd": None
-        }
+        context = {"os": None, "project_type": None, "cwd": None}
         result = format_context_info(context)
         assert result == "No context detected"

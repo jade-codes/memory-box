@@ -1,6 +1,5 @@
 """MCP Server for Memory Box."""
 
-
 from fastmcp import FastMCP
 
 from memory_box.config import get_settings
@@ -33,7 +32,7 @@ def add_command(
     project_type: str | None = None,
     context: str | None = None,
     category: str | None = None,
-    auto_detect_context: bool = True
+    auto_detect_context: bool = True,
 ) -> str:
     """
     Add a new command to your memory box.
@@ -71,7 +70,7 @@ def add_command(
         os=os,
         project_type=project_type,
         context=context,
-        category=category
+        category=category,
     )
 
     command_id = db.add_command(cmd)
@@ -87,7 +86,7 @@ def search_commands(
     category: str | None = None,
     tags: list[str] | None = None,
     limit: int = 10,
-    use_current_context: bool = False
+    use_current_context: bool = False,
 ) -> str:
     """
     Search for commands in your memory box.
@@ -115,12 +114,7 @@ def search_commands(
             project_type = current_context.get("project_type")
 
     commands = db.search_commands(
-        query=query,
-        os=os,
-        project_type=project_type,
-        category=category,
-        tags=tags,
-        limit=limit
+        query=query, os=os, project_type=project_type, category=category, tags=tags, limit=limit
     )
 
     if not commands:
@@ -261,9 +255,7 @@ def get_context_suggestions() -> str:
 
     db = get_db()
     commands = db.search_commands(
-        os=current_context.get("os"),
-        project_type=current_context.get("project_type"),
-        limit=10
+        os=current_context.get("os"), project_type=current_context.get("project_type"), limit=10
     )
 
     if not commands:
@@ -276,7 +268,7 @@ def get_context_suggestions() -> str:
         f"  OS: {current_context.get('os')}",
         f"  Project: {current_context.get('project_type') or 'none detected'}",
         f"  Directory: {current_context.get('cwd')}",
-        ""
+        "",
     ]
 
     for i, cmd in enumerate(commands, 1):

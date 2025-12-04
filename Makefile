@@ -36,6 +36,9 @@ test-watch:  ## Run tests in watch mode
 
 check: lint format-check typecheck test  ## Run all quality checks
 
+check-guidelines:  ## Check compliance with development guidelines
+	@bash scripts/check-guidelines.sh
+
 pre-commit-install:  ## Install pre-commit hooks
 	uv run pre-commit install
 

@@ -27,3 +27,21 @@ repos:
           - pydantic-settings>=2.1.0
           - types-python-dateutil
         args: [--strict]
+
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: Run tests before commit
+        entry: bash -c 'python -m pytest tests/ --tb=short -q'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+
+      - id: guidelines-reminder
+        name: Development Guidelines Reminder
+        entry: bash -c 'echo "✅ Remember to follow CONTRIBUTING.md - tests first, refactor after green!"'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]

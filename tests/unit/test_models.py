@@ -13,10 +13,7 @@ class TestCommand:
 
     def test_command_creation_minimal(self) -> None:
         """Test creating a command with minimal required fields."""
-        cmd = Command(
-            command="git status",
-            description="Show the working tree status"
-        )
+        cmd = Command(command="git status", description="Show the working tree status")
         assert cmd.command == "git status"
         assert cmd.description == "Show the working tree status"
         assert cmd.tags == []
@@ -34,7 +31,7 @@ class TestCommand:
             os="linux",
             project_type="python",
             context="Use when setting up a new Python project",
-            category="package-management"
+            category="package-management",
         )
         assert cmd.command == "poetry install"
         assert cmd.description == "Install project dependencies"
@@ -62,9 +59,7 @@ class TestCommand:
     def test_command_serialization(self) -> None:
         """Test that command can be serialized to dict."""
         cmd = Command(
-            command="npm install",
-            description="Install Node.js dependencies",
-            tags=["node", "npm"]
+            command="npm install", description="Install Node.js dependencies", tags=["node", "npm"]
         )
         data = cmd.model_dump()
         assert data["command"] == "npm install"
@@ -84,7 +79,7 @@ class TestCommandWithMetadata:
             description="List running containers",
             tags=["docker"],
             created_at=now,
-            use_count=5
+            use_count=5,
         )
         assert cmd.id == "test-id-123"
         assert cmd.command == "docker ps"
@@ -109,7 +104,7 @@ class TestCommandWithMetadata:
             category="kubernetes",
             created_at=created,
             last_used=last_used,
-            use_count=10
+            use_count=10,
         )
         assert cmd.id == "test-id-456"
         assert cmd.last_used == last_used
@@ -123,8 +118,7 @@ class TestCommandWithMetadata:
         """Test that missing required metadata fields raises error."""
         with pytest.raises(ValidationError):
             CommandWithMetadata(  # type: ignore[call-arg]
-                command="test",
-                description="test"
+                command="test", description="test"
             )
 
     def test_command_with_metadata_serialization(self) -> None:
@@ -135,7 +129,7 @@ class TestCommandWithMetadata:
             command="cargo build",
             description="Build Rust project",
             created_at=now,
-            use_count=3
+            use_count=3,
         )
         data = cmd.model_dump()
         assert data["id"] == "test-789"

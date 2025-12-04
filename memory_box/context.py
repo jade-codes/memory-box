@@ -54,16 +54,12 @@ def detect_project_type(directory: str | None = None) -> str | None:
     return None
 
 
-def get_current_context() -> dict:
+def get_current_context() -> dict[str, str | None]:
     """Get the current system and project context."""
-    return {
-        "os": detect_os(),
-        "project_type": detect_project_type(),
-        "cwd": str(Path.cwd())
-    }
+    return {"os": detect_os(), "project_type": detect_project_type(), "cwd": str(Path.cwd())}
 
 
-def format_context_info(context: dict) -> str:
+def format_context_info(context: dict[str, str | None]) -> str:
     """Format context information for display."""
     parts = []
 

@@ -71,13 +71,26 @@ select = [
     "PL",     # pylint
     "TRY",    # tryceratops
     "RUF",    # ruff-specific rules
+    "C90",    # mccabe complexity
+    "FBT",    # flake8-boolean-trap
 ]
 ignore = [
-    "ANN101",  # Missing type annotation for self
-    "ANN102",  # Missing type annotation for cls
     "S101",    # Use of assert
-    "PLR0913", # Too many arguments
+    "PLR0913", # Too many arguments (we handle this in code review)
+    "FBT001",  # Boolean positional arg (allow for simple cases)
+    "FBT002",  # Boolean default arg (allow for simple cases)
+    "FBT003",  # Boolean positional value in call (common in CLI frameworks)
+    "B008",    # Function call in argument default (required by Typer)
 ]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10  # Flag functions with complexity > 10
+
+[tool.ruff.lint.pylint]
+max-args = 5          # Maximum function arguments
+max-branches = 12     # Maximum if/elif/else branches
+max-returns = 6       # Maximum return statements
+max-statements = 50   # Maximum statements in function
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
@@ -86,6 +99,13 @@ ignore = [
     "PLR2004", # Allow magic values in tests
     "ANN",     # Allow missing type annotations in tests
     "PT004",   # Allow fixtures without return statement
+]
+"memory_box/cli.py" = [
+    "PLW0603", # Global statement acceptable for CLI singleton
+]
+"memory_box/server.py" = [
+    "PLW0603", # Global statement acceptable for MCP server singleton
+    "C901",    # MCP tool functions can be slightly more complex
 ]
 
 [tool.ruff.format]

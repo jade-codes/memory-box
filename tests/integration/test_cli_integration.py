@@ -1,8 +1,5 @@
 """Integration tests for CLI with real Neo4j database."""
 
-import os
-from datetime import datetime
-
 import pytest
 from typer.testing import CliRunner
 
@@ -25,7 +22,6 @@ def clean_database(neo4j_client):
     """Clean the database before each test."""
     with neo4j_client.driver.session(database=neo4j_client.database) as session:
         session.run("MATCH (n) DETACH DELETE n")
-    yield
 
 
 @pytest.fixture
